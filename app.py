@@ -5,7 +5,7 @@ import re
 
 st.set_page_config(page_title="Blockers & Reprocessamento", page_icon="🛡️", layout="wide")
 
-st.title("🛡️ Extrator de Blockers e SKUs")
+st.title("🛡️ Extrator de Blockers e Reprocessamento")
 
 uploaded_file = st.file_uploader("Suba o arquivo CSV original", type=["csv"])
 
@@ -70,14 +70,18 @@ if uploaded_file:
             df_raw_blockers = pd.concat([df_obvios, df_pecas])
             df_raw_blockers['blocker'] = df_raw_blockers[col_desc].str.lower()
 
-            # --- 1. VISUALIZAÇÃO (Sem índice, ordem original e sem ID) ---
+            # --- 1. VISUALIZAÇÃO ---
             st.subheader("Visualização dos Blockers Encontrados")
-            # Extrai únicos mantendo a ordem original de aparição
+            
+            # Extrai únicos mantendo a ordem original
             termos_unicos_series = df_raw_blockers['blocker'].unique()
             termos_unicos = pd.DataFrame(termos_unicos_series, columns=['blocker'])
             
+            # ADICIONADO: Contador de blockers únicos
+            st.success(f"Foram identificados {len(termos_unicos)} blockers únicos.")
+            
             st.dataframe(termos_unicos, use_container_width=True, hide_index=True)
-
+            
             # --- 2. ÁREA DE DOWNLOADS ---
             st.divider()
             st.subheader("📥 Baixar Resultados")
@@ -96,6 +100,7 @@ if uploaded_file:
                 # Agora a variável 'termos_unicos' está definida corretamente!
                 csv_blockers = termos_unicos.to_csv(index=False).encode('utf-8')
                 st.download_button("Download Blockers (Únicos)", csv_blockers, "lista_blockers_ia.csv", "text/csv")
+
 
 
 
