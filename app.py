@@ -15,7 +15,7 @@ if uploaded_file:
     except:
         df = pd.read_csv(uploaded_file, encoding='latin1')
     
-    col = st.selectbox("Selecione a coluna com a descrição do produto", df.columns)
+    col = st.selectbox("Selecione a coluna com o título do produto", df.columns)
     
     col1, col2, col3 = st.columns(3)
     with col1:
@@ -78,4 +78,5 @@ if uploaded_file:
 
             csv = resultado.to_csv(index=False).encode('utf-8')
             st.download_button("📥 Baixar CSV de Blockers", csv, "blockers_ia_v3.csv", "text/csv")
+
 
