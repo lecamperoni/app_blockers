@@ -38,7 +38,7 @@ if uploaded_file:
         # Inteligência de Sugestão
         todas_as_palavras = " ".join(df_potenciais_acertos[col_desc].astype(str)).lower()
         palavras = re.findall(r'\w+', todas_as_palavras)
-         stop_words = [
+        stop_words = [
             'para', 'com', 'pelo', 'pela', 'mais', 'esta', 'essa', 'este', 'esse',
             'sem', 'nos', 'nas', 'dos', 'das', 'uma', 'uns', 'umas', 'sob', 'sobre',
             'entre', 'através', 'cada', 'qual', 'quais', 'quem', 'cujo', 'cuja',
@@ -46,8 +46,7 @@ if uploaded_file:
             'todas', 'todos', 'outra', 'outro', 'outras', 'outros', 'muito', 'muita',
             'pode', 'ponto', 'item', 'peca', 'peça', 'unidade', 'unidades',
             'cm', 'mm', 'litros', 'volts', '110v', '220v', 'bivolt', 'preta', 'branco',
-            'azul', 'verde', 'amarelo', 'cinza'
-        ]
+            'azul', 'verde', 'amarelo', 'cinza']
         palavras_filtradas = [w for w in palavras if len(w) > 3 and w not in stop_words and not any(v.lower() in w for v in lista_validos)]
         contagem = Counter(palavras_filtradas).most_common(10)
         
@@ -92,6 +91,7 @@ if uploaded_file:
                 st.caption("Apenas termos únicos (sem ID)")
                 csv_blockers = termos_unicos.to_csv(index=False).encode('utf-8')
                 st.download_button("Download Blockers (Únicos)", csv_blockers, "lista_blockers_ia.csv", "text/csv")
+
 
 
 
