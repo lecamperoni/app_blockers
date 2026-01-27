@@ -81,16 +81,17 @@ if uploaded_file:
 
             with d_col1:
                 st.write("**Para Reprocessamento:**")
-                st.caption("Contém navigation_id + termo (mantém duplicados)")
+                st.caption("Contém navigation_id + termo")
                 df_reprocessar = df_raw_blockers[[col_id, 'blocker']]
                 csv_repro = df_reprocessar.to_csv(index=False).encode('utf-8')
                 st.download_button("Download Reprocessamento", csv_repro, "lista_reprocessamento.csv", "text/csv")
 
             with d_col2:
                 st.write("**Blockers:**")
-                st.caption("Apenas termos únicos (sem ID)")
+                st.caption("Apenas termos únicos (sem SKU)")
                 csv_blockers = termos_unicos.to_csv(index=False).encode('utf-8')
                 st.download_button("Download Blockers (Únicos)", csv_blockers, "lista_blockers_ia.csv", "text/csv")
+
 
 
 
