@@ -69,12 +69,17 @@ if uploaded_file:
             df_raw_blockers = pd.concat([df_obvios, df_pecas])
             df_raw_blockers['blocker'] = df_raw_blockers[col_desc].str.lower()
 
-            # --- 1. VISUALIZAÇÃO RÁPIDA (Apenas os termos únicos, sem ID) ---
+            # --- 1. VISUALIZAÇÃO RÁPIDA (Apenas os termos únicos, sem ID e sem índice) ---
             st.subheader("Visualização dos Blockers Encontrados")
-            termos_unicos = df_raw_blockers[['blocker']].drop_duplicates().sort_values('blocker')
-            st.dataframe(termos_unicos, use_container_width=True)
+            
+            # .unique() preserva a ordem de aparição original
+            termos_unicos_lista = df_raw_blockers['blocker'].unique()
+            df_visualizacao = pd.DataFrame(termos_unicos_lista, columns=['blocker'])
+            
+            # Exibe o dataframe ocultando a coluna de índice (o número da linha)
+            st.dataframe(df_visualizacao, use_container_width=True, hide_index=True)
 
-            # --- 2. ÁREA DE DOWNLOADS ---
+            # --- 2. ÁREA DE DOWNLOADS---
             st.divider()
             st.subheader("📥 Baixar Resultados")
             d_col1, d_col2 = st.columns(2)
@@ -91,6 +96,7 @@ if uploaded_file:
                 st.caption("Apenas termos únicos (sem SKU)")
                 csv_blockers = termos_unicos.to_csv(index=False).encode('utf-8')
                 st.download_button("Download Blockers (Únicos)", csv_blockers, "lista_blockers_ia.csv", "text/csv")
+
 
 
 
