@@ -3,7 +3,7 @@ import pandas as pd
 from collections import Counter
 import re
 
-st.set_page_config(page_title="Curadoria & Reprocessamento", page_icon="🛡️", layout="wide")
+st.set_page_config(page_title="Blockers & Reprocessamento", page_icon="🛡️", layout="wide")
 
 st.title("🛡️ Extrator de Blockers e SKUs")
 
@@ -35,7 +35,7 @@ if uploaded_file:
         df_obvios = df[~mask_validos].copy()
         df_potenciais_acertos = df[mask_validos].copy()
 
-        # Inteligência de Sugestão
+        # Inteligência de Sugestão com Stop Words
         todas_as_palavras = " ".join(df_potenciais_acertos[col_desc].astype(str)).lower()
         palavras = re.findall(r'\w+', todas_as_palavras)
         stop_words = [
@@ -44,13 +44,14 @@ if uploaded_file:
             'entre', 'através', 'cada', 'qual', 'quais', 'quem', 'cujo', 'cuja',
             'tudo', 'nada', 'algum', 'alguma', 'alguns', 'algumas', 'toda', 'todo',
             'todas', 'todos', 'outra', 'outro', 'outras', 'outros', 'muito', 'muita',
-            'pode', 'ponto', 'item', 'peca', 'peça', 'unidade', 'unidades',
+            'pode', 'ponto', 'item', 'unidade', 'unidades',
             'cm', 'mm', 'litros', 'volts', '110v', '220v', 'bivolt', 'preta', 'branco',
-            'azul', 'verde', 'amarelo', 'cinza']
+            'azul', 'verde', 'amarelo', 'cinza', 'original', 'profissional'
+        ]
         palavras_filtradas = [w for w in palavras if len(w) > 3 and w not in stop_words and not any(v.lower() in w for v in lista_validos)]
         contagem = Counter(palavras_filtradas).most_common(10)
         
-        st.info("💡 **Análise de Padrões:** Palavras que podem indicar blockers (peças/acessórios).")
+        st.info("💡 **Análise de Padrões:** Palavras frequentes que podem indicar blockers (peças/acessórios).")
         sugestoes = st.columns(len(contagem))
         for i, (palavra, freq) in enumerate(contagem):
             sugestoes[i].code(palavra)
@@ -65,21 +66,19 @@ if uploaded_file:
             else:
                 df_pecas = pd.DataFrame()
 
-            # Base completa de itens capturados (mantendo duplicados e IDs)
+            # Base completa de capturados (Raw)
             df_raw_blockers = pd.concat([df_obvios, df_pecas])
             df_raw_blockers['blocker'] = df_raw_blockers[col_desc].str.lower()
 
-            # --- 1. VISUALIZAÇÃO RÁPIDA (Apenas os termos únicos, sem ID e sem índice) ---
+            # --- 1. VISUALIZAÇÃO (Sem índice, ordem original e sem ID) ---
             st.subheader("Visualização dos Blockers Encontrados")
+            # Extrai únicos mantendo a ordem original de aparição
+            termos_unicos_series = df_raw_blockers['blocker'].unique()
+            termos_unicos = pd.DataFrame(termos_unicos_series, columns=['blocker'])
             
-            # .unique() preserva a ordem de aparição original
-            termos_unicos_lista = df_raw_blockers['blocker'].unique()
-            df_visualizacao = pd.DataFrame(termos_unicos_lista, columns=['blocker'])
-            
-            # Exibe o dataframe ocultando a coluna de índice (o número da linha)
-            st.dataframe(df_visualizacao, use_container_width=True, hide_index=True)
+            st.dataframe(termos_unicos, use_container_width=True, hide_index=True)
 
-            # --- 2. ÁREA DE DOWNLOADS---
+            # --- 2. ÁREA DE DOWNLOADS ---
             st.divider()
             st.subheader("📥 Baixar Resultados")
             d_col1, d_col2 = st.columns(2)
@@ -87,15 +86,17 @@ if uploaded_file:
             with d_col1:
                 st.write("**Para Reprocessamento:**")
                 st.caption("Contém navigation_id + termo")
-                df_reprocessar = df_raw_blockers[[col_id, 'blocker']]
-                csv_repro = df_reprocessar.to_csv(index=False).encode('utf-8')
+                df_repro = df_raw_blockers[[col_id, 'blocker']]
+                csv_repro = df_repro.to_csv(index=False).encode('utf-8')
                 st.download_button("Download Reprocessamento", csv_repro, "lista_reprocessamento.csv", "text/csv")
 
             with d_col2:
                 st.write("**Blockers:**")
                 st.caption("Apenas termos únicos (sem SKU)")
+                # Agora a variável 'termos_unicos' está definida corretamente!
                 csv_blockers = termos_unicos.to_csv(index=False).encode('utf-8')
                 st.download_button("Download Blockers (Únicos)", csv_blockers, "lista_blockers_ia.csv", "text/csv")
+
 
 
 
