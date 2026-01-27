@@ -3,9 +3,9 @@ import pandas as pd
 from collections import Counter
 import re
 
-st.set_page_config(page_title="Extrator de Blockers", page_icon="🛡️", layout="wide")
+st.set_page_config(page_title="Curadoria & Reprocessamento", page_icon="🛡️", layout="wide")
 
-st.title("🛡️ Extrator de Blockers com SKUs")
+st.title("🛡️ Extrator de Blockers e SKUs")
 
 uploaded_file = st.file_uploader("Suba o arquivo CSV original", type=["csv"])
 
@@ -15,33 +15,30 @@ if uploaded_file:
     except:
         df = pd.read_csv(uploaded_file, encoding='latin1')
     
-    # Seleção de colunas baseada nas suas imagens
-    col_id = st.selectbox("Selecione a coluna do navigation_id (SKU do produto):", df.columns, index=0)
-    col_desc = st.selectbox("Selecione a coluna com o título do produto:", df.columns, index=1)
+    col_id = st.selectbox("Selecione a coluna do navigation_id:", df.columns, index=0)
+    col_desc = st.selectbox("Selecione a coluna do título do produto:", df.columns, index=1)
     
     col1, col2, col3 = st.columns(3)
     with col1:
         termo_alvo = st.text_input("Termo Principal (ex: Máquina de Costura):", "")
     with col2:
-        sinonimos_input = st.text_input("Sinônimos/Validadores (ex: doméstica, overlock):", "")
+        sinonimos_input = st.text_input("Sinônimos/Validadores (ex: doméstica):", "")
     with col3:
-        excecoes_input = st.text_input("Bloquear se for peça (ex: agulha, cabo):", "")
+        excecoes_input = st.text_input("Bloquear se for peça (ex: agulha):", "")
 
     if termo_alvo:
+        # Lógica de Filtragem
         lista_validos = [termo_alvo.strip()] + [s.strip() for s in sinonimos_input.split(",") if s.strip()]
         regex_validos = '|'.join(lista_validos)
         
-        # 1. Filtra o que é blocker direto por não ter o nome/sinônimo
         mask_validos = df[col_desc].str.contains(regex_validos, case=False, na=False)
         df_obvios = df[~mask_validos].copy()
-        
-        # 2. Itens válidos que podem ser peças (exceções)
         df_potenciais_acertos = df[mask_validos].copy()
 
-        # --- INTELIGÊNCIA DE SUGESTÃO (OPCIONAL NO FLUXO) ---
+        # Inteligência de Sugestão
         todas_as_palavras = " ".join(df_potenciais_acertos[col_desc].astype(str)).lower()
         palavras = re.findall(r'\w+', todas_as_palavras)
-        stop_words = [
+         stop_words = [
             'para', 'com', 'pelo', 'pela', 'mais', 'esta', 'essa', 'este', 'esse',
             'sem', 'nos', 'nas', 'dos', 'das', 'uma', 'uns', 'umas', 'sob', 'sobre',
             'entre', 'através', 'cada', 'qual', 'quais', 'quem', 'cujo', 'cuja',
@@ -54,12 +51,12 @@ if uploaded_file:
         palavras_filtradas = [w for w in palavras if len(w) > 3 and w not in stop_words and not any(v.lower() in w for v in lista_validos)]
         contagem = Counter(palavras_filtradas).most_common(10)
         
-        st.info("💡 **Análise de Padrões:** Palavras que podem indicar peças/acessórios")
+        st.info("💡 **Análise de Padrões:** Palavras que podem indicar blockers (peças/acessórios).")
         sugestoes = st.columns(len(contagem))
         for i, (palavra, freq) in enumerate(contagem):
             sugestoes[i].code(palavra)
 
-        if st.button("☑️ Gerar Lista de Reprocessamento"):
+        if st.button("☑️ Processar Dados"):
             lista_excecoes = [t.strip() for t in excecoes_input.split(",") if t.strip()]
             
             if lista_excecoes:
@@ -69,23 +66,33 @@ if uploaded_file:
             else:
                 df_pecas = pd.DataFrame()
 
-            # Unindo os resultados mantendo o ID
-            df_final = pd.concat([df_obvios, df_pecas])
-            
-            # Formatação solicitada: minúsculas e mapeamento de colunas
-            df_final['blocker'] = df_final[col_desc].str.lower()
-            
-            # Selecionamos apenas as colunas necessárias para o reprocessamento
-            resultado = df_final[[col_id, 'blocker']].drop_duplicates()
+            # Base completa de itens capturados (mantendo duplicados e IDs)
+            df_raw_blockers = pd.concat([df_obvios, df_pecas])
+            df_raw_blockers['blocker'] = df_raw_blockers[col_desc].str.lower()
 
-            st.success(f"✅ {len(resultado)} itens prontos para reprocessamento!")
-            st.dataframe(resultado)
+            # --- 1. VISUALIZAÇÃO RÁPIDA (Apenas os termos únicos, sem ID) ---
+            st.subheader("Visualização dos Blockers Encontrados")
+            termos_unicos = df_raw_blockers[['blocker']].drop_duplicates().sort_values('blocker')
+            st.dataframe(termos_unicos, use_container_width=True)
 
-            csv = resultado.to_csv(index=False).encode('utf-8')
-            st.download_button("📥 Baixar CSV de Reprocessamento", csv, "lista_reprocessar.csv", "text/csv")
+            # --- 2. ÁREA DE DOWNLOADS ---
+            st.divider()
+            st.subheader("📥 Baixar Resultados")
+            d_col1, d_col2 = st.columns(2)
 
-            csv = resultado.to_csv(index=False).encode('utf-8')
-            st.download_button("📥 Baixar CSV de Blockers", csv, "blockers_ia_v3.csv", "text/csv")
+            with d_col1:
+                st.write("**Para Reprocessamento:**")
+                st.caption("Contém navigation_id + termo (mantém duplicados)")
+                df_reprocessar = df_raw_blockers[[col_id, 'blocker']]
+                csv_repro = df_reprocessar.to_csv(index=False).encode('utf-8')
+                st.download_button("Download Reprocessamento", csv_repro, "lista_reprocessamento.csv", "text/csv")
+
+            with d_col2:
+                st.write("**Blockers:**")
+                st.caption("Apenas termos únicos (sem ID)")
+                csv_blockers = termos_unicos.to_csv(index=False).encode('utf-8')
+                st.download_button("Download Blockers (Únicos)", csv_blockers, "lista_blockers_ia.csv", "text/csv")
+
 
 
 
