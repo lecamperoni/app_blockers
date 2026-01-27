@@ -57,7 +57,7 @@ if uploaded_file:
         for i, (palavra, freq) in enumerate(contagem):
             sugestoes_botoes[i].code(f"{palavra}")
 
-        if st.button("🚀 Gerar Lista de Blockers"):
+        if st.button("☑️ Gerar Lista de Blockers"):
             # Filtra peças dentro dos itens que seriam "bons"
             lista_excecoes = [t.strip() for t in excecoes_input.split(",") if t.strip()]
             
@@ -78,5 +78,6 @@ if uploaded_file:
 
             csv = resultado.to_csv(index=False).encode('utf-8')
             st.download_button("📥 Baixar CSV de Blockers", csv, "blockers_ia_v3.csv", "text/csv")
+
 
 
