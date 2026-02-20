@@ -103,6 +103,7 @@ if uploaded_file:
 
             with d_col2:
                 st.write("**Blockers:**")
-                st.caption("Apenas termos únicos para a IA (sem IDs ou links)")
+                st.caption("Apenas termos únicos (sem IDs ou links)")
                 csv_blockers = termos_unicos.to_csv(index=False).encode('utf-8')
-                st.download_button("Download Blockers (Únicos)", csv_blockers, "lista_blockers_ia.csv", "text/csv")
+                st.download_button("Download Blockers (Únicos)", csv_blockers, "lista_blockers.csv", "text/csv")
+
