@@ -20,7 +20,7 @@ if uploaded_file:
     
     col1, col2, col3 = st.columns(3)
     with col1:
-        termo_alvo = st.text_input("Termo Principal (ex: Máquina de Costura):", "")
+        termo_alvo = st.text_input("Tipo de Produto (ex: Máquina de Costura):", "")
     with col2:
         sinonimos_input = st.text_input("Sinônimos/Validadores (ex: doméstica):", "")
     with col3:
@@ -106,4 +106,5 @@ if uploaded_file:
                 st.caption("Apenas termos únicos (sem IDs ou links)")
                 csv_blockers = termos_unicos.to_csv(index=False).encode('utf-8')
                 st.download_button("Download Blockers (Únicos)", csv_blockers, "lista_blockers.csv", "text/csv")
+
 
